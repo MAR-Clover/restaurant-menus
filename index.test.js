@@ -1,5 +1,6 @@
 const {sequelize} = require('./db')
 const {Restaurant, Menu} = require('./models/index')
+const {Item} = require('./models/Item')
 const {
     seedRestaurant,
     seedMenu,
@@ -24,6 +25,124 @@ describe('Restaurant and Menu Models', () => {
         await Menu.bulkCreate(seedMenu)
 
         console.log(await Menu.findAll())
+    });
+
+//---------------------Tests for Item Start--------------------------
+// Make sure to export the model and import it anywhere you need it.
+// Create tests to verify you can perform CRUD operations using the Item model.
+
+
+    test('can create an Item', async () => {
+        // TODO - write test
+        const burger = await Item.create({
+            name: 'burger',
+            image: 'burger-image.jpg',
+            price: 7.99,
+            vegetarian: false,
+        })
+        expect(burger.name).toEqual('burger')
+        expect(burger.image).toEqual('burger-image.jpg')
+        expect(burger.price).toBe(7.99)
+        expect(burger.vegetarian).toBe(false)
+    });
+    
+    test('can read an Item', async () => {
+        // TODO - write test
+        const burger = await Item.findOne({where:{name:'burger'}})
+
+        expect(burger.name).toEqual('burger')
+
+    });
+
+    test('can delete an Item', async () => {
+        // TODO - write test
+        const burger = await Item.findOne({where:{name:'burger'}})
+
+        burger.destroy()
+
+        const burgerAfterDeletion = await Item.findOne({where:{name:'burger'}})
+
+        expect(burgerAfterDeletion).toBeNull()
+    });
+
+    test('can update an Item', async () => {
+        // TODO - write test
+        const burger = await Item.create({
+            name: 'burger',
+            image: 'burger-image.jpg',
+            price: 7.99,
+            vegetarian: false,
+        })
+
+        await burger.update({name:"cheese burger"})
+
+        const updatedBurger = await Item.findOne({where:{name:"cheese burger"}})
+
+        expect(burger.name).toEqual('cheese burger')
+
+    });
+
+
+    test('Item and Menu association', async () => {
+        // TODO - write test
+
+        //get existing menu
+        //create 2 menu items
+        //add 2 items to menu
+        //get eager loaded data to confirm association
+
+        const menu = await Menu.findOne({where:{title:"Dinner"}})
+        const burger = await Item.findOne({where:{name:'cheese burger'}})
+        const soda = await Item.create({
+            name: 'coke',
+            image: 'coke-image.jpg',
+            price: 1.99,
+            vegetarian: true,
+        })
+
+        await menu.addItem(burger)
+        await menu.addItem(soda)
+
+        //get eager loaded result
+
+        const menuWithItems = await Menu.findOne({where:{title:"Dinner"}, include:Item})
+
+    
+        expect(menuWithItems.title).toBe('Dinner')
+        expect(menuWithItems.Items.length).toBe(2)
+        expect(menuWithItems.Items[0].name).toEqual('cheese burger')
+        expect(menuWithItems.Items[1].name).toEqual('coke')
+
+
+    });
+
+
+
+
+//---------------------Tests for Item End--------------------------
+
+    test('Restaurant and Menu associations', async () => {
+        // TODO - write test
+
+        //get existing restaurant
+        const spiceGrill = await Restaurant.findOne({where:{name:'Spice Grill'}})
+
+        const menu1 = await Menu.findOne({where:{title:'Breakfast'}})
+        const menu2 = await Menu.findOne({where:{title:'Dinner'}})
+
+        //add menu instances to restaurant
+
+        await spiceGrill.addMenu(menu1)
+        await spiceGrill.addMenu(menu2)
+        //load eager data
+
+        const restaurantWithMenus = await Restaurant.findOne({where:{name:"Spice Grill"}, include:Menu})
+
+        expect(restaurantWithMenus.name).toEqual('Spice Grill')
+        expect(restaurantWithMenus.Menus.length).toBe(2);  // There should be two menus
+        expect(restaurantWithMenus.Menus[0].title).toEqual('Breakfast');
+        expect(restaurantWithMenus.Menus[1].title).toEqual('Dinner');        
+
     });
 
     test('can create a Restaurant', async () => {
